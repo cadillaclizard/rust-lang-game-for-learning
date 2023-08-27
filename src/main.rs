@@ -1,15 +1,36 @@
-mod screen;
+use std::{error::Error, time::Duration};
 
-use std::io;
+use argh::FromArgs;
 
-fn main() -> io::Result<()> {
-    crate::screen::Screen::new();
-    // let game = TheGame::new("The Game".to_string());
-    // game.run();
+mod app;
+#[cfg(feature = "crossterm")]
+mod crossterm;
+#[cfg(feature = "termion")]
+mod termion;
+#[cfg(feature = "termwiz")]
+mod termwiz;
 
-    // let cli: Cli = argh::from_env();
-    // let tick_rate = Duration::from_millis(25); //(cli.tick_rate);
-    // crate::crossterm::run(tick_rate, cli.enhanced_graphics)?;
+mod ui;
 
+/// Demo
+#[derive(Debug, FromArgs)]
+struct Cli {
+    /// time in ms between two ticks.
+    #[argh(option, default = "25")]
+    tick_rate: u64,
+    /// whether unicode symbols are used to improve the overall look of the app
+    #[argh(option, default = "true")]
+    enhanced_graphics: bool,
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    let cli: Cli = argh::from_env();
+    let tick_rate = Duration::from_millis(cli.tick_rate);
+    #[cfg(feature = "crossterm")]
+    crate::crossterm::run(tick_rate, cli.enhanced_graphics)?;
+    #[cfg(feature = "termion")]
+    crate::termion::run(tick_rate, cli.enhanced_graphics)?;
+    #[cfg(feature = "termwiz")]
+    crate::termwiz::run(tick_rate, cli.enhanced_graphics)?;
     Ok(())
 }
