@@ -1,3 +1,4 @@
+use crossterm::event::KeyEvent;
 use rand::{
     distributions::{Distribution, Uniform},
     rngs::ThreadRng,
@@ -222,7 +223,7 @@ pub struct Server<'a> {
 }
 
 pub struct App<'a> {
-    pub title: &'a str,
+    pub title: String,
     pub should_quit: bool,
     pub tabs: TabsState<'a>,
     pub show_chart: bool,
@@ -230,6 +231,7 @@ pub struct App<'a> {
     pub sparkline: Signal<RandomSignal>,
     pub tasks: StatefulList<&'a str>,
     pub logs: StatefulList<(&'a str, &'a str)>,
+    pub events: StatefulList<KeyEvent>,
     pub signals: Signals,
     pub barchart: Vec<(&'a str, u64)>,
     pub servers: Vec<Server<'a>>,
@@ -245,11 +247,10 @@ impl<'a> App<'a> {
         let mut sin_signal2 = SinSignal::new(0.1, 2.0, 10.0);
         let sin2_points = sin_signal2.by_ref().take(200).collect();
         App {
-            title,
+            title: title.to_owned(),
             should_quit: false,
             tabs: TabsState::new(vec!["Tab0", "Tab1", "Tab2"]),
-            show_chart: true,
-
+            show_chart: false,
             progress: 0.0,
             sparkline: Signal {
                 source: rand_signal,
@@ -258,6 +259,7 @@ impl<'a> App<'a> {
             },
             tasks: StatefulList::with_items(TASKS.to_vec()),
             logs: StatefulList::with_items(LOGS.to_vec()),
+            events: StatefulList::with_items([].to_vec()),
             signals: Signals {
                 sin1: Signal {
                     source: sin_signal,
@@ -324,10 +326,14 @@ impl<'a> App<'a> {
                 self.should_quit = true;
             }
             't' => {
-                self.show_chart = !self.show_chart;
+                // self.show_chart = !self.show_chart;
             }
             _ => {}
         }
+    }
+
+    pub fn on_event(&mut self, key: KeyEvent) {
+        self.events.items.insert(0, key);
     }
 
     pub fn on_tick(&mut self) {

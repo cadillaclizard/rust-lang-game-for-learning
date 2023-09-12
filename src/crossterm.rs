@@ -7,7 +7,10 @@ use std::{
 use crossterm::{
     event::{self, DisableMouseCapture, EnableMouseCapture, Event, KeyCode, KeyEventKind},
     execute,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, size, EnterAlternateScreen, LeaveAlternateScreen,
+        SetSize,
+    },
 };
 use ratatui::prelude::*;
 
@@ -21,8 +24,13 @@ pub fn run(tick_rate: Duration, enhanced_graphics: bool) -> Result<(), Box<dyn E
     let backend = CrosstermBackend::new(stdout);
     let mut terminal = Terminal::new(backend)?;
 
+    // execute!(io::stdout(), SetSize(120, 40))?;
+    let (cols, rows) = size()?;
+
+    let title = format!("Rust Game ({}x{})", cols, rows);
+
     // create app and run it
-    let app = App::new("Crossterm Demo", enhanced_graphics);
+    let app = App::new(&title, enhanced_graphics);
     let res = run_app(&mut terminal, app, tick_rate);
 
     // restore terminal
@@ -54,17 +62,27 @@ fn run_app<B: Backend>(
             .checked_sub(last_tick.elapsed())
             .unwrap_or_else(|| Duration::from_secs(0));
         if crossterm::event::poll(timeout)? {
-            if let Event::Key(key) = event::read()? {
-                if key.kind == KeyEventKind::Press {
-                    match key.code {
-                        KeyCode::Char(c) => app.on_key(c),
-                        KeyCode::Left => app.on_left(),
-                        KeyCode::Up => app.on_up(),
-                        KeyCode::Right => app.on_right(),
-                        KeyCode::Down => app.on_down(),
-                        _ => {}
-                    }
+            let e = event::read()?;
+
+            match e {
+                Event::Mouse(_) => {}
+                Event::Resize(width, height) => {
+                    app.title = format!("Rust Game ({}x{})", width, height);
                 }
+                Event::Key(key) => {
+                  app.on_event(key);
+                  if key.kind == KeyEventKind::Press {
+                      match key.code {
+                          KeyCode::Char(c) => app.on_key(c),
+                          KeyCode::Left => app.on_left(),
+                          KeyCode::Up => app.on_up(),
+                          KeyCode::Right => app.on_right(),
+                          KeyCode::Down => app.on_down(),
+                          _ => {}
+                      }
+                  }
+              }
+                _ => {}
             }
         }
         if last_tick.elapsed() >= tick_rate {

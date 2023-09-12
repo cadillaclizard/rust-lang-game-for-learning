@@ -1,0 +1,8 @@
+{
+  "recommendations": [
+    "dustypomerleau.rust-syntax",
+    "rust-lang.rust-analyzer",
+    "serayuzgur.crates",
+    "esbenp.prettier-vscode"
+  ]
+}

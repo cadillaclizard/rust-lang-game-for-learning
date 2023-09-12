@@ -16,7 +16,7 @@ pub fn draw<B: Backend>(f: &mut Frame<B>, app: &mut App) {
         .map(|t| text::Line::from(Span::styled(*t, Style::default().fg(Color::Green))))
         .collect();
     let tabs = Tabs::new(titles)
-        .block(Block::default().borders(Borders::ALL).title(app.title))
+        .block(Block::default().borders(Borders::ALL).title(app.title.to_string()))
         .highlight_style(Style::default().fg(Color::Yellow))
         .select(app.tabs.index);
     f.render_widget(tabs, chunks[0]);
@@ -118,72 +118,70 @@ where
     {
         let chunks = Layout::default()
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
+            .direction(Direction::Horizontal)
             .split(chunks[0]);
-        {
-            let chunks = Layout::default()
-                .constraints([Constraint::Percentage(50), Constraint::Percentage(50)].as_ref())
-                .direction(Direction::Horizontal)
-                .split(chunks[0]);
 
-            // Draw tasks
-            let tasks: Vec<ListItem> = app
-                .tasks
-                .items
-                .iter()
-                .map(|i| ListItem::new(vec![text::Line::from(Span::raw(*i))]))
-                .collect();
-            let tasks = List::new(tasks)
-                .block(Block::default().borders(Borders::ALL).title("List"))
-                .highlight_style(Style::default().add_modifier(Modifier::BOLD))
-                .highlight_symbol("> ");
-            f.render_stateful_widget(tasks, chunks[0], &mut app.tasks.state);
+        // Draw events
+        let events: Vec<ListItem> = app
+            .events
+            .items
+            .iter()
+            .map(|i| ListItem::new(vec![text::Line::from(Span::raw(format!("{:?}", *i)))]))
+            .collect();
+        let events = List::new(events)
+            .block(Block::default().borders(Borders::ALL).title("Events"))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .highlight_symbol("> ");
+        f.render_stateful_widget(events, chunks[0], &mut app.tasks.state);
 
-            // Draw logs
-            let info_style = Style::default().fg(Color::Blue);
-            let warning_style = Style::default().fg(Color::Yellow);
-            let error_style = Style::default().fg(Color::Magenta);
-            let critical_style = Style::default().fg(Color::Red);
-            let logs: Vec<ListItem> = app
-                .logs
-                .items
-                .iter()
-                .map(|&(evt, level)| {
-                    let s = match level {
-                        "ERROR" => error_style,
-                        "CRITICAL" => critical_style,
-                        "WARNING" => warning_style,
-                        _ => info_style,
-                    };
-                    let content = vec![text::Line::from(vec![
-                        Span::styled(format!("{level:<9}"), s),
-                        Span::raw(evt),
-                    ])];
-                    ListItem::new(content)
-                })
-                .collect();
-            let logs = List::new(logs).block(Block::default().borders(Borders::ALL).title("List"));
-            f.render_stateful_widget(logs, chunks[1], &mut app.logs.state);
-        }
-
-        let barchart = BarChart::default()
-            .block(Block::default().borders(Borders::ALL).title("Bar chart"))
-            .data(&app.barchart)
-            .bar_width(3)
-            .bar_gap(2)
-            .bar_set(if app.enhanced_graphics {
-                symbols::bar::NINE_LEVELS
-            } else {
-                symbols::bar::THREE_LEVELS
+        // Draw logs
+        let info_style = Style::default().fg(Color::Blue);
+        let warning_style = Style::default().fg(Color::Yellow);
+        let error_style = Style::default().fg(Color::Magenta);
+        let critical_style = Style::default().fg(Color::Red);
+        let logs: Vec<ListItem> = app
+            .logs
+            .items
+            .iter()
+            .map(|&(evt, level)| {
+                let s = match level {
+                    "ERROR" => error_style,
+                    "CRITICAL" => critical_style,
+                    "WARNING" => warning_style,
+                    _ => info_style,
+                };
+                let content = vec![text::Line::from(vec![
+                    Span::styled(format!("{level:<9}"), s),
+                    Span::raw(evt),
+                ])];
+                ListItem::new(content)
             })
-            .value_style(
-                Style::default()
-                    .fg(Color::Black)
-                    .bg(Color::Green)
-                    .add_modifier(Modifier::ITALIC),
-            )
-            .label_style(Style::default().fg(Color::Yellow))
-            .bar_style(Style::default().fg(Color::Green));
-        f.render_widget(barchart, chunks[1]);
+            .collect();
+        let logs = List::new(logs)
+            .block(Block::default().borders(Borders::ALL).title("Logs"))
+            .highlight_style(Style::default().add_modifier(Modifier::BOLD))
+            .highlight_symbol("> ");
+        f.render_stateful_widget(logs, chunks[1], &mut app.logs.state);
+
+        // let barchart = BarChart::default()
+        //     .block(Block::default().borders(Borders::ALL).title("Bar chart"))
+        //     .data(&app.barchart)
+        //     .bar_width(3)
+        //     .bar_gap(2)
+        //     .bar_set(if app.enhanced_graphics {
+        //         symbols::bar::NINE_LEVELS
+        //     } else {
+        //         symbols::bar::THREE_LEVELS
+        //     })
+        //     .value_style(
+        //         Style::default()
+        //             .fg(Color::Black)
+        //             .bg(Color::Green)
+        //             .add_modifier(Modifier::ITALIC),
+        //     )
+        //     .label_style(Style::default().fg(Color::Yellow))
+        //     .bar_style(Style::default().fg(Color::Green));
+        // f.render_widget(barchart, chunks[1]);
     }
     if app.show_chart {
         let x_labels = vec![
@@ -302,7 +300,8 @@ where
     let failure_style = Style::default()
         .fg(Color::Red)
         .add_modifier(Modifier::RAPID_BLINK | Modifier::CROSSED_OUT);
-    let rows = app.servers.iter().map(|s| {
+    let rows = app.
+    servers.iter().map(|s| {
         let style = if s.status == "Up" {
             up_style
         } else {
@@ -374,7 +373,7 @@ where
         } else {
             symbols::Marker::Dot
         })
-        .x_bounds([-180.0, 180.0])
+        .x_bounds([-90.0, 180.0])
         .y_bounds([-90.0, 90.0]);
     f.render_widget(map, chunks[1]);
 }
