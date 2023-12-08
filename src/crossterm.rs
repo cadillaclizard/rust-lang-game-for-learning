@@ -64,24 +64,25 @@ fn run_app<B: Backend>(
         if crossterm::event::poll(timeout)? {
             let e = event::read()?;
 
+            app.on_event(&e);
+
             match e {
                 Event::Mouse(_) => {}
                 Event::Resize(width, height) => {
                     app.title = format!("Rust Game ({}x{})", width, height);
                 }
-                Event::Key(key) => {
-                  app.on_event(key);
-                  if key.kind == KeyEventKind::Press {
-                      match key.code {
-                          KeyCode::Char(c) => app.on_key(c),
-                          KeyCode::Left => app.on_left(),
-                          KeyCode::Up => app.on_up(),
-                          KeyCode::Right => app.on_right(),
-                          KeyCode::Down => app.on_down(),
-                          _ => {}
-                      }
-                  }
-              }
+                Event::Key(e) => {
+                    if e.kind == KeyEventKind::Press {
+                        match e.code {
+                            KeyCode::Char(c) => app.on_key(c),
+                            KeyCode::Left => app.on_left(),
+                            KeyCode::Up => app.on_up(),
+                            KeyCode::Right => app.on_right(),
+                            KeyCode::Down => app.on_down(),
+                            _ => {}
+                        }
+                    }
+                }
                 _ => {}
             }
         }

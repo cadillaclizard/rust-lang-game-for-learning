@@ -1,4 +1,4 @@
-use crossterm::event::KeyEvent;
+use crossterm::event::{Event};
 use rand::{
     distributions::{Distribution, Uniform},
     rngs::ThreadRng,
@@ -231,7 +231,7 @@ pub struct App<'a> {
     pub sparkline: Signal<RandomSignal>,
     pub tasks: StatefulList<&'a str>,
     pub logs: StatefulList<(&'a str, &'a str)>,
-    pub events: StatefulList<KeyEvent>,
+    pub events: StatefulList<Event>,
     pub signals: Signals,
     pub barchart: Vec<(&'a str, u64)>,
     pub servers: Vec<Server<'a>>,
@@ -332,8 +332,8 @@ impl<'a> App<'a> {
         }
     }
 
-    pub fn on_event(&mut self, key: KeyEvent) {
-        self.events.items.insert(0, key);
+    pub fn on_event(&mut self, key: &Event) {
+        self.events.items.insert(0, key.clone());
     }
 
     pub fn on_tick(&mut self) {
